@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PySpark Day 1 — Notebook Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Patrick+Hand&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #fffdf7;
+    --paper-edge: #f6f1e1;
+    --line-blue: #cfe0ee;
+    --margin-red: #e8b4b8;
+    --ink: #1f3a5f;
+    --ink-soft: #33507a;
+    --marker-teal: #0d7d6f;
+    --marker-purple: #6b3fa0;
+    --marker-orange: #c9622a;
+    --highlight-yellow: #fff3a3;
+    --highlight-pink: #ffd6e0;
+    --highlight-green: #d6f5d6;
+    --pencil-grey: #7a7a7a;
+    --spiral: #b7bcc4;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    padding: 30px 0 60px 0;
+    background: #d9dde3;
+    font-family: 'Patrick Hand', cursive;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 26px;
+  }
+
+  .page{
+    position:relative;
+    width: 850px;
+    min-height: 1100px;
+    background:
+      repeating-linear-gradient(
+        var(--paper) 0px,
+        var(--paper) 33px,
+        var(--line-blue) 34px,
+        var(--paper) 35px
+      );
+    background-color: var(--paper);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.28), 0 2px 6px rgba(0,0,0,0.15);
+    border-radius: 3px;
+    padding: 55px 55px 55px 100px;
+    overflow:hidden;
+  }
+
+  /* red margin line */
+  .page::before{
+    content:"";
+    position:absolute;
+    left: 78px;
+    top:0;
+    bottom:0;
+    width:2px;
+    background: var(--margin-red);
+    opacity:0.7;
+  }
+
+  /* spiral binding */
+  .spiral{
+    position:absolute;
+    left: 22px;
+    top: 40px;
+    bottom: 40px;
+    width: 20px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+  }
+  .spiral span{
+    display:block;
+    width: 18px;
+    height: 18px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 35%, #e8eaed, var(--spiral) 70%);
+    box-shadow: inset -2px -2px 3px rgba(0,0,0,0.25), 0 1px 1px rgba(0,0,0,0.2);
+  }
+
+  .page-num{
+    position:absolute;
+    bottom: 20px;
+    right: 34px;
+    font-family:'Patrick Hand',cursive;
+    color: var(--pencil-grey);
+    font-size:15px;
+    transform: rotate(-3deg);
+  }
+
+  h1.page-title{
+    font-family:'Caveat', cursive;
+    font-weight:700;
+    font-size: 46px;
+    color: var(--marker-teal);
+    margin: 0 0 4px 0;
+    display:inline-block;
+    border-bottom: 4px solid var(--highlight-yellow);
+    padding-bottom:4px;
+  }
+  .subtitle{
+    font-family:'Shadows Into Light', cursive;
+    color: var(--ink-soft);
+    font-size:19px;
+    margin: 4px 0 22px 0;
+  }
+
+  h2.section{
+    font-family:'Caveat', cursive;
+    font-weight:700;
+    color: var(--marker-purple);
+    font-size:29px;
+    margin: 20px 0 8px 0;
+  }
+
+  p, li{
+    color: var(--ink);
+    font-size: 19px;
+    line-height: 1.55;
+  }
+
+  ul{ margin: 6px 0 6px 0; padding-left: 26px; }
+  li{ margin-bottom: 6px; }
+  li::marker{ color: var(--marker-teal); font-size: 20px; }
+
+  .box{
+    border: 2.5px dashed var(--marker-orange);
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    background: rgba(255,255,255,0.5);
+  }
+  .box-title{
+    font-family:'Caveat', cursive;
+    font-weight:700;
+    color: var(--marker-orange);
+    font-size: 23px;
+    margin-bottom:4px;
+  }
+
+  .highlight{
+    background: linear-gradient(120deg, var(--highlight-yellow) 0%, var(--highlight-yellow) 100%);
+    padding: 0 4px;
+    border-radius: 3px;
+  }
+  .highlight-pink{ background: var(--highlight-pink); padding:0 4px; border-radius:3px; }
+  .highlight-green{ background: var(--highlight-green); padding:0 4px; border-radius:3px; }
+
+  .example{
+    margin: 10px 0;
+    padding: 10px 16px;
+    border-left: 4px solid var(--marker-teal);
+    background: rgba(13,125,111,0.06);
+    border-radius: 0 8px 8px 0;
+  }
+  .example b{ color: var(--marker-teal); }
+
+  .tag{
+    display:inline-block;
+    font-family:'Caveat', cursive;
+    font-weight:700;
+    font-size:20px;
+    color:#fff;
+    background: var(--marker-purple);
+    padding:2px 12px;
+    border-radius:20px;
+    transform: rotate(-2deg);
+    margin-right:6px;
+  }
+
+  .diagram-wrap{
+    display:flex;
+    justify-content:center;
+    margin: 12px 0;
+  }
+
+  .caption{
+    text-align:center;
+    font-family:'Shadows Into Light', cursive;
+    color: var(--pencil-grey);
+    font-size:16px;
+    margin-top:-4px;
+  }
+
+  .sticky{
+    position:absolute;
+    font-family:'Shadows Into Light', cursive;
+    background: var(--highlight-yellow);
+    padding: 8px 14px;
+    font-size:16px;
+    color:#4a3b00;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.25);
+    transform: rotate(4deg);
+  }
+
+  .arrow-flow{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap: 6px;
+    margin: 16px 0;
+  }
+  .flow-box{
+    font-family:'Caveat', cursive;
+    font-weight:700;
+    font-size:20px;
+    border:2.5px solid var(--ink-soft);
+    border-radius:10px;
+    padding: 8px 14px;
+    background:#fff;
+    color: var(--ink-soft);
+  }
+  .flow-arrow{
+    font-size:24px;
+    color: var(--marker-orange);
+  }
+
+  table.notebook-table{
+    width:100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-family:'Patrick Hand', cursive;
+  }
+  table.notebook-table th{
+    font-family:'Caveat', cursive;
+    font-size:22px;
+    color:#fff;
+    background: var(--ink-soft);
+    padding:8px;
+    border:2px solid var(--ink-soft);
+  }
+  table.notebook-table td{
+    padding:8px 10px;
+    border: 2px dashed #a9b8cc;
+    font-size:17px;
+    color: var(--ink);
+  }
+
+  .checklist li{ list-style:none; margin-left:-26px; }
+  .checklist li::before{
+    content:"☐ ";
+    color: var(--marker-orange);
+    font-size: 20px;
+  }
+
+  .cover .doodle{ position:absolute; }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER PAGE ============ -->
+<div class="page cover">
+  <div class="spiral">
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span>
+  </div>
+
+  <div style="text-align:center; margin-top:60px;">
+    <div style="font-family:'Shadows Into Light',cursive; color:var(--marker-purple); font-size:22px;">✦ My Study Notes ✦</div>
+    <h1 style="font-family:'Caveat',cursive; font-weight:700; font-size:74px; color:var(--marker-teal); margin:10px 0 0 0;">PySpark</h1>
+    <div style="font-family:'Caveat',cursive; font-weight:700; font-size:38px; color:var(--marker-orange); margin-top:-6px;">Day 1 Notebook</div>
+    <div style="font-family:'Shadows Into Light',cursive; font-size:20px; color:var(--ink-soft); margin-top:14px;">
+      Big Data Landscape &amp; Introduction to Apache Spark
+    </div>
+  </div>
+
+  <div class="diagram-wrap" style="margin-top:50px;">
+    <svg width="520" height="300" viewBox="0 0 520 300">
+      <!-- laptop -->
+      <rect x="150" y="120" width="220" height="130" rx="8" fill="#fff" stroke="#1f3a5f" stroke-width="3"/>
+      <rect x="165" y="135" width="190" height="95" rx="4" fill="#eaf3fb" stroke="#1f3a5f" stroke-width="2"/>
+      <rect x="120" y="250" width="280" height="14" rx="6" fill="#cfd6e0" stroke="#1f3a5f" stroke-width="2"/>
+      <!-- spark bolt -->
+      <polygon points="270,150 240,195 262,195 245,225 300,175 275,175" fill="#ffcf3a" stroke="#c9622a" stroke-width="2.5"/>
+      <!-- cluster nodes around -->
+      <circle cx="70" cy="90" r="22" fill="#d6f5d6" stroke="#0d7d6f" stroke-width="3"/>
+      <circle cx="450" cy="90" r="22" fill="#d6f5d6" stroke="#0d7d6f" stroke-width="3"/>
+      <circle cx="60" cy="200" r="22" fill="#d6f5d6" stroke="#0d7d6f" stroke-width="3"/>
+      <circle cx="460" cy="210" r="22" fill="#d6f5d6" stroke="#0d7d6f" stroke-width="3"/>
+      <line x1="90" y1="100" x2="150" y2="140" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="4 4"/>
+      <line x1="430" y1="100" x2="370" y2="140" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="4 4"/>
+      <line x1="80" y1="195" x2="150" y2="190" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="4 4"/>
+      <line x1="440" y1="205" x2="370" y2="195" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="4 4"/>
+      <text x="260" y="285" font-family="Caveat" font-weight="700" font-size="20" fill="#1f3a5f" text-anchor="middle">one engine, many machines</text>
+    </svg>
+  </div>
+
+  <div class="sticky" style="top:120px; left:60px;">4 Vs, Hadoop,<br>Spark stack,<br>Driver &amp; Executors...</div>
+  <div class="sticky" style="top:600px; right:70px; background:var(--highlight-pink);">Let's gooo! 🚀</div>
+
+  <div style="position:absolute; bottom:70px; left:100px; right:55px; text-align:center;">
+    <div style="border-top:2px dashed var(--pencil-grey); padding-top:14px; font-family:'Shadows Into Light',cursive; color:var(--pencil-grey); font-size:17px;">
+      Contents: Big Data &amp; 4Vs • pandas limits • Hadoop ecosystem • Why Spark • Spark stack • Architecture • Where PySpark fits • Case studies • Glossary • Practice
+    </div>
+  </div>
+  <div class="page-num">cover</div>
+</div>
+
+<!-- ============ PAGE 1: BIG DATA & 4 Vs ============ -->
+<div class="page">
+  <div class="spiral"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <span class="tag">Topic 1</span>
+  <h1 class="page-title">What is "Big Data"?</h1>
+  <div class="subtitle">...and the famous 4 V's ✍️</div>
+
+  <p><span class="highlight">Big data</span> = data that is too <b>big</b>, too <b>fast</b>, or too <b>messy</b> for a single computer / normal tools (like Excel or pandas) to handle comfortably.</p>
+
+  <div class="box">
+    <div class="box-title">Why does this even matter?</div>
+    <p style="margin:0;">Because once data crosses a certain size or speed, our usual tricks (loading a CSV into RAM) simply stop working — we need many machines working <i>together</i>. That's the whole reason Hadoop and Spark exist!</p>
+  </div>
+
+  <h2 class="section">The 4 V's</h2>
+  <div class="diagram-wrap">
+    <svg width="560" height="330" viewBox="0 0 560 330">
+      <circle cx="280" cy="165" r="72" fill="#fff3a3" stroke="#c9622a" stroke-width="3"/>
+      <text x="280" y="160" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="26" fill="#1f3a5f">BIG</text>
+      <text x="280" y="185" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="26" fill="#1f3a5f">DATA</text>
+
+      <!-- Volume -->
+      <rect x="20" y="20" width="150" height="70" rx="12" fill="#d6f5d6" stroke="#0d7d6f" stroke-width="2.5"/>
+      <text x="95" y="48" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="22" fill="#0d7d6f">Volume</text>
+      <text x="95" y="68" text-anchor="middle" font-family="Patrick Hand" font-size="13" fill="#1f3a5f">size of data</text>
+      <line x1="170" y1="60" x2="225" y2="130" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="5 4"/>
+
+      <!-- Velocity -->
+      <rect x="390" y="20" width="150" height="70" rx="12" fill="#d6e8f5" stroke="#1f3a5f" stroke-width="2.5"/>
+      <text x="465" y="48" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="22" fill="#1f3a5f">Velocity</text>
+      <text x="465" y="68" text-anchor="middle" font-family="Patrick Hand" font-size="13" fill="#1f3a5f">speed of arrival</text>
+      <line x1="390" y1="60" x2="335" y2="130" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="5 4"/>
+
+      <!-- Variety -->
+      <rect x="20" y="240" width="150" height="70" rx="12" fill="#ffd6e0" stroke="#c9622a" stroke-width="2.5"/>
+      <text x="95" y="268" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="22" fill="#c9622a">Variety</text>
+      <text x="95" y="288" text-anchor="middle" font-family="Patrick Hand" font-size="13" fill="#1f3a5f">different formats</text>
+      <line x1="170" y1="260" x2="225" y2="200" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="5 4"/>
+
+      <!-- Veracity -->
+      <rect x="390" y="240" width="150" height="70" rx="12" fill="#e6d6f5" stroke="#6b3fa0" stroke-width="2.5"/>
+      <text x="465" y="268" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="22" fill="#6b3fa0">Veracity</text>
+      <text x="465" y="288" text-anchor="middle" font-family="Patrick Hand" font-size="13" fill="#1f3a5f">trustworthiness</text>
+      <line x1="390" y1="260" x2="335" y2="200" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="5 4"/>
+    </svg>
+  </div>
+
+  <ul>
+    <li><b>Volume</b> — the sheer amount of data (GBs → TBs → PBs). E.g. a large social network can generate several <b>petabytes per day</b>.</li>
+    <li><b>Velocity</b> — how fast new data pours in. E.g. stock ticks, IoT sensors, app clickstreams arriving every second.</li>
+    <li><b>Variety</b> — many formats: structured (tables), semi-structured (JSON/XML), unstructured (images, video, free text).</li>
+    <li><b>Veracity</b> — is the data even reliable? Real data has duplicates, missing values, bots, typos.</li>
+  </ul>
+
+  <div class="example">
+    <b>Example — Netflix:</b> Volume = watch-history of 200M+ users. Velocity = real-time click/play events. Variety = video files + star ratings + text reviews. Veracity = fake reviews / incomplete watch data that must be cleaned.
+  </div>
+
+  <h2 class="section">More examples, one V at a time</h2>
+  <ul>
+    <li><b>Volume:</b> YouTube users upload roughly <b>500 hours of video every minute</b> — no single hard drive or database was ever meant to hold that.</li>
+    <li><b>Velocity:</b> During a cricket/football final, millions of tweets can fire off <b>per minute</b> — the system has to ingest and react before the moment is even over.</li>
+    <li><b>Variety:</b> A hospital's records include structured lab-test tables, semi-structured HL7/JSON messages, <i>and</i> unstructured doctor notes and X-ray images — all describing the same patient.</li>
+    <li><b>Veracity:</b> A retailer's sensor-based footfall counter might double-count people who pause near the door — the raw number looks precise but isn't necessarily true.</li>
+  </ul>
+
+  <div class="box">
+    <div class="box-title">A simple gut-check ✅</div>
+    <p style="margin:0;">Ask yourself: "Can one good laptop store this, process it in a reasonable time, and can I trust the numbers as-is?" If the honest answer to any part is <b>no</b>, you've stepped into "big data" territory — and that's exactly the situation Spark was designed for.</p>
+  </div>
+
+  <div class="page-num">page 1</div>
+</div>
+
+<!-- ============ PAGE 2: pandas limitations ============ -->
+<div class="page">
+  <div class="spiral"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <span class="tag">Topic 2</span>
+  <h1 class="page-title">Why pandas struggles</h1>
+  <div class="subtitle">the "single machine" problem 💻</div>
+
+  <p>pandas is amazing for small-medium data — but it was built to run on <span class="highlight">one computer, using one machine's RAM</span>.</p>
+
+  <div class="diagram-wrap">
+    <svg width="520" height="230" viewBox="0 0 520 230">
+      <rect x="150" y="70" width="220" height="130" rx="8" fill="#fff" stroke="#1f3a5f" stroke-width="3"/>
+      <rect x="165" y="85" width="190" height="95" rx="4" fill="#eaf3fb" stroke="#1f3a5f" stroke-width="2"/>
+      <text x="260" y="130" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="20" fill="#1f3a5f">one laptop</text>
+      <text x="260" y="155" text-anchor="middle" font-family="Patrick Hand" font-size="14" fill="#1f3a5f">RAM: 16 GB</text>
+      <!-- overflowing data blocks -->
+      <rect x="30" y="30" width="34" height="34" fill="#ffd6e0" stroke="#c9622a" stroke-width="2"/>
+      <rect x="70" y="20" width="34" height="34" fill="#ffd6e0" stroke="#c9622a" stroke-width="2"/>
+      <rect x="30" y="70" width="34" height="34" fill="#ffd6e0" stroke="#c9622a" stroke-width="2"/>
+      <rect x="420" y="30" width="34" height="34" fill="#ffd6e0" stroke="#c9622a" stroke-width="2"/>
+      <rect x="460" y="20" width="34" height="34" fill="#ffd6e0" stroke="#c9622a" stroke-width="2"/>
+      <rect x="420" y="70" width="34" height="34" fill="#ffd6e0" stroke="#c9622a" stroke-width="2"/>
+      <text x="260" y="220" text-anchor="middle" font-family="Shadows Into Light" font-size="18" fill="#c9622a">too much data overflowing the RAM = MemoryError 💥</text>
+    </svg>
+  </div>
+
+  <ul>
+    <li>pandas loads the <b>entire dataset into RAM</b>. Bigger than your RAM → crash (<code>MemoryError</code>).</li>
+    <li>Mostly <b>single-threaded</b> — it barely uses your extra CPU cores, let alone other machines.</li>
+    <li><b>No fault tolerance</b> — if the script or machine dies mid-run, you lose everything and start over.</li>
+  </ul>
+
+  <h2 class="section">pandas vs Spark — when to use which?</h2>
+  <table class="notebook-table">
+    <tr><th>Situation</th><th>pandas</th><th>Spark / PySpark</th></tr>
+    <tr><td>Data size</td><td>fits in RAM (MB–few GB)</td><td>too big for one machine (GBs–TBs+)</td></tr>
+    <tr><td>Machines used</td><td>1</td><td>many, in a cluster</td></tr>
+    <tr><td>Speed on huge data</td><td>slow / crashes</td><td>fast (parallel + in-memory)</td></tr>
+    <tr><td>Fault tolerance</td><td>none</td><td>built-in (recomputes lost data)</td></tr>
+    <tr><td>Best for</td><td>quick exploration, small ML</td><td>production pipelines, huge datasets</td></tr>
+  </table>
+
+  <div class="box">
+    <div class="box-title">Rule of thumb 👍</div>
+    <p style="margin:0;">If your laptop can open it comfortably → use pandas. If it needs a cluster, or must never lose progress halfway → reach for Spark.</p>
+  </div>
+
+  <h2 class="section">A worked example</h2>
+  <div class="example">
+    <b>Scenario:</b> you have a 200 GB CSV of e-commerce orders and need to compute total revenue per city.<br>
+    • With <b>pandas</b> — <code>pd.read_csv()</code> tries to pull all 200 GB into RAM at once. A typical laptop (8–16 GB RAM) simply cannot hold it → <code>MemoryError</code> before you even start computing.<br>
+    • With <b>PySpark</b> — the file is automatically split into partitions, spread across many machines, and each machine only holds and processes its own slice. The final "sum per city" is combined at the end.
+  </div>
+
+  <div class="box">
+    <div class="box-title">pandas isn't "bad" — it's just built for a different job</div>
+    <p style="margin:0;">For fast exploration of a CSV that fits on your laptop, pandas is actually <i>faster</i> to write and iterate with than Spark (no cluster setup, no distributed overhead). Many real workflows start in pandas, and only move to PySpark once the data outgrows one machine.</p>
+  </div>
+
+  <div class="page-num">page 2</div>
+</div>
+
+<!-- ============ PAGE 3: Hadoop Ecosystem ============ -->
+<div class="page">
+  <div class="spiral"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <span class="tag">Topic 3</span>
+  <h1 class="page-title">The Hadoop Ecosystem</h1>
+  <div class="subtitle">the framework that came before Spark 🐘</div>
+
+  <p>Hadoop (2006) was the <b>original</b> big-data framework. It has 3 main pieces:</p>
+
+  <div class="diagram-wrap">
+    <svg width="600" height="260" viewBox="0 0 600 260">
+      <!-- HDFS: file split across nodes -->
+      <text x="300" y="25" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="22" fill="#0d7d6f">HDFS — file split across machines</text>
+      <rect x="60" y="45" width="90" height="60" rx="6" fill="#d6f5d6" stroke="#0d7d6f" stroke-width="2.5"/>
+      <text x="105" y="80" text-anchor="middle" font-family="Patrick Hand" font-size="15" fill="#1f3a5f">Block A</text>
+      <rect x="255" y="45" width="90" height="60" rx="6" fill="#d6e8f5" stroke="#1f3a5f" stroke-width="2.5"/>
+      <text x="300" y="80" text-anchor="middle" font-family="Patrick Hand" font-size="15" fill="#1f3a5f">Block B</text>
+      <rect x="450" y="45" width="90" height="60" rx="6" fill="#ffd6e0" stroke="#c9622a" stroke-width="2.5"/>
+      <text x="495" y="80" text-anchor="middle" font-family="Patrick Hand" font-size="15" fill="#1f3a5f">Block C</text>
+      <text x="300" y="122" text-anchor="middle" font-family="Shadows Into Light" font-size="14" fill="#7a7a7a">(each block also copied elsewhere = replication)</text>
+
+      <line x1="60" y1="150" x2="540" y2="150" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="4 4"/>
+
+      <!-- MapReduce -->
+      <text x="150" y="175" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="20" fill="#6b3fa0">MapReduce</text>
+      <rect x="55" y="185" width="90" height="45" rx="6" fill="#e6d6f5" stroke="#6b3fa0" stroke-width="2"/>
+      <text x="100" y="212" text-anchor="middle" font-family="Patrick Hand" font-size="14" fill="#1f3a5f">Map</text>
+      <text x="160" y="212" font-family="Caveat" font-size="20" fill="#c9622a">→</text>
+      <rect x="180" y="185" width="90" height="45" rx="6" fill="#e6d6f5" stroke="#6b3fa0" stroke-width="2"/>
+      <text x="225" y="212" text-anchor="middle" font-family="Patrick Hand" font-size="14" fill="#1f3a5f">Reduce</text>
+      <text x="150" y="245" text-anchor="middle" font-family="Shadows Into Light" font-size="13" fill="#c9622a">writes to disk between every step (slow!)</text>
+
+      <!-- YARN -->
+      <text x="450" y="175" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="20" fill="#1f3a5f">YARN</text>
+      <rect x="380" y="185" width="150" height="45" rx="6" fill="#d6e8f5" stroke="#1f3a5f" stroke-width="2"/>
+      <text x="455" y="212" text-anchor="middle" font-family="Patrick Hand" font-size="14" fill="#1f3a5f">resource manager</text>
+    </svg>
+  </div>
+
+  <ul>
+    <li><b>HDFS (Hadoop Distributed File System)</b> — splits big files into blocks (default 128 MB each), spreads them across many machines, and keeps replica copies (default <b>3 copies</b>) so no data is lost if one machine dies.</li>
+    <li><b>MapReduce</b> — a 2-step model: <span class="highlight-green">Map</span> processes chunks in parallel, <span class="highlight-green">Reduce</span> combines the results. Downside: writes intermediate results <b>to disk</b> at every step → slow.</li>
+    <li><b>YARN (Yet Another Resource Negotiator)</b> — the "manager" that decides which machine runs which job, and how much CPU/RAM it gets. Made of a <b>ResourceManager</b> (the master, tracks the whole cluster) and a <b>NodeManager</b> on every machine (reports its own free resources).</li>
+  </ul>
+
+  <div class="example">
+    <b>Worked example — Word Count (the "hello world" of MapReduce):</b><br>
+    Input: three text files spread across the cluster.<br>
+    1. <b>Map step</b> — each machine reads its own chunk and emits <code>(word, 1)</code> pairs for every word it sees, in parallel.<br>
+    2. <b>Shuffle</b> — all pairs with the same word get grouped together (written to disk here — this is the slow part!).<br>
+    3. <b>Reduce step</b> — for each word, add up all the 1's to get its final total count.
+  </div>
+
+  <div class="box">
+    <div class="box-title">Key takeaway</div>
+    <p style="margin:0;">Hadoop solved the "too big for one machine" problem — but MapReduce's constant disk writing made it slow, especially for jobs that repeat many times (like ML training). That gap is exactly what Spark was built to fix. 👉 Next page!</p>
+  </div>
+
+  <div class="page-num">page 3</div>
+</div>
+
+<!-- ============ PAGE 4: Why Spark ============ -->
+<div class="page">
+  <div class="spiral"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <span class="tag">Topic 4</span>
+  <h1 class="page-title">Why Apache Spark?</h1>
+  <div class="subtitle">in-memory computing changes everything ⚡</div>
+
+  <p>Spark's core insight: instead of writing intermediate results to disk every step (like MapReduce), <span class="highlight">keep the data in RAM</span> across operations.</p>
+
+  <div class="diagram-wrap">
+    <svg width="600" height="280" viewBox="0 0 600 280">
+      <text x="150" y="25" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="22" fill="#c9622a">MapReduce (disk-based)</text>
+      <rect x="30" y="45" width="80" height="45" rx="6" fill="#ffe9d6" stroke="#c9622a" stroke-width="2"/>
+      <text x="70" y="72" text-anchor="middle" font-family="Patrick Hand" font-size="13" fill="#1f3a5f">Step 1</text>
+      <text x="120" y="72" font-size="18" fill="#c9622a">→💾→</text>
+      <rect x="160" y="45" width="80" height="45" rx="6" fill="#ffe9d6" stroke="#c9622a" stroke-width="2"/>
+      <text x="200" y="72" text-anchor="middle" font-family="Patrick Hand" font-size="13" fill="#1f3a5f">Step 2</text>
+      <text x="250" y="72" font-size="18" fill="#c9622a">→💾→</text>
+      <rect x="270" y="45" width="80" height="45" rx="6" fill="#ffe9d6" stroke="#c9622a" stroke-width="2"/>
+      <text x="310" y="72" text-anchor="middle" font-family="Patrick Hand" font-size="13" fill="#1f3a5f">Step 3</text>
+      <text x="360" y="103" font-family="Shadows Into Light" font-size="14" fill="#c9622a">disk read/write every single step 🐢</text>
+
+      <line x1="30" y1="130" x2="530" y2="130" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="4 4"/>
+
+      <text x="150" y="160" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="22" fill="#0d7d6f">Spark (in-memory)</text>
+      <rect x="30" y="180" width="330" height="60" rx="10" fill="#d6f5d6" stroke="#0d7d6f" stroke-width="2.5"/>
+      <text x="195" y="205" text-anchor="middle" font-family="Patrick Hand" font-size="14" fill="#1f3a5f">Step 1 → Step 2 → Step 3</text>
+      <text x="195" y="225" text-anchor="middle" font-family="Patrick Hand" font-size="13" fill="#1f3a5f">all kept in RAM 🚀</text>
+      <text x="195" y="260" text-anchor="middle" font-family="Shadows Into Light" font-size="14" fill="#0d7d6f">up to 10–100x faster for repeated/iterative work</text>
+    </svg>
+  </div>
+
+  <ul>
+    <li><b>In-memory computing</b> — data stays in RAM between operations instead of round-tripping to disk.</li>
+    <li><b>Speed</b> — especially huge for <i>iterative</i> algorithms (machine learning training loops, graph algorithms) that touch the same data again and again.</li>
+    <li><b>Unified engine</b> — one framework for batch processing, SQL, streaming, ML, and graphs — instead of stitching together 5 separate tools.</li>
+  </ul>
+
+  <div class="example">
+    <b>Analogy:</b> MapReduce is like re-reading your notes from a locker every single time you need them. Spark is like keeping your notes open on the desk in front of you while you work.
+  </div>
+
+  <h2 class="section">The idea behind the speed: RDDs</h2>
+  <p>Spark's original in-memory building block is called an <b>RDD</b> (Resilient Distributed Dataset) — think of it as a collection of data spread across the cluster that Spark remembers <i>how to rebuild</i> if a machine fails, instead of needing a saved copy on disk. "Resilient" = it can recover itself; "Distributed" = it lives across many machines.</p>
+
+  <div class="example">
+    <b>Iterative example — training a model:</b> Logistic regression training loops over the same dataset dozens of times, tweaking weights each round. With MapReduce, each round means writing results to disk and reading them back — 20 rounds = 20 rounds of disk I/O. With Spark, the dataset is cached in RAM once, and every round just reuses it in memory. This is the exact scenario where Spark's own benchmarks showed roughly <b>100x</b> speedups over MapReduce.</p>
+  </div>
+
+  <div class="page-num">page 4</div>
+</div>
+
+<!-- ============ PAGE 5: Spark component stack ============ -->
+<div class="page">
+  <div class="spiral"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <span class="tag">Topic 5</span>
+  <h1 class="page-title">Spark's Component Stack</h1>
+  <div class="subtitle">one engine, five specialised libraries 🧱</div>
+
+  <div class="diagram-wrap">
+    <svg width="520" height="330" viewBox="0 0 520 330">
+      <!-- top layer libraries -->
+      <rect x="20" y="20" width="95" height="70" rx="10" fill="#ffd6e0" stroke="#c9622a" stroke-width="2.5"/>
+      <text x="67" y="60" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="19" fill="#c9622a">Spark SQL</text>
+
+      <rect x="125" y="20" width="95" height="70" rx="10" fill="#d6e8f5" stroke="#1f3a5f" stroke-width="2.5"/>
+      <text x="172" y="52" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="17" fill="#1f3a5f">Streaming</text>
+
+      <rect x="230" y="20" width="95" height="70" rx="10" fill="#e6d6f5" stroke="#6b3fa0" stroke-width="2.5"/>
+      <text x="277" y="60" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="19" fill="#6b3fa0">MLlib</text>
+
+      <rect x="335" y="20" width="95" height="70" rx="10" fill="#d6f5d6" stroke="#0d7d6f" stroke-width="2.5"/>
+      <text x="382" y="60" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="19" fill="#0d7d6f">GraphX</text>
+
+      <!-- foundation -->
+      <rect x="20" y="120" width="410" height="80" rx="12" fill="#fff3a3" stroke="#c9622a" stroke-width="3"/>
+      <text x="225" y="168" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="26" fill="#1f3a5f">Spark Core</text>
+      <text x="225" y="190" text-anchor="middle" font-family="Patrick Hand" font-size="13" fill="#1f3a5f">task scheduling · memory mgmt · fault recovery</text>
+
+      <line x1="67" y1="90" x2="67" y2="120" stroke="#7a7a7a" stroke-width="2"/>
+      <line x1="172" y1="90" x2="172" y2="120" stroke="#7a7a7a" stroke-width="2"/>
+      <line x1="277" y1="90" x2="277" y2="120" stroke="#7a7a7a" stroke-width="2"/>
+      <line x1="382" y1="90" x2="382" y2="120" stroke="#7a7a7a" stroke-width="2"/>
+
+      <text x="225" y="240" text-anchor="middle" font-family="Shadows Into Light" font-size="16" fill="#7a7a7a">everything sits on top of Spark Core — the foundation</text>
+    </svg>
+  </div>
+
+  <ul>
+    <li><b>Spark Core</b> — the engine underneath everything: schedules tasks, manages memory, recovers from failures. This is the foundation.</li>
+    <li><b>Spark SQL</b> — run SQL queries or use DataFrames to work with structured data.</li>
+    <li><b>Spark Streaming</b> (Structured Streaming) — process live, continuously-arriving data (e.g. sensor feeds, logs).</li>
+    <li><b>MLlib</b> — built-in machine learning algorithms: classification, clustering, recommendation, etc.</li>
+    <li><b>GraphX</b> — analyse graph-shaped data — social networks, recommendation graphs, network routes.</li>
+  </ul>
+
+  <div class="box">
+    <div class="box-title">Why "unified" matters</div>
+    <p style="margin:0;">You don't need 5 different tools glued together — one Spark cluster can run a SQL query, train an ML model, and process a data stream, all sharing the same engine underneath.</p>
+  </div>
+
+  <h2 class="section">One example per library</h2>
+  <table class="notebook-table">
+    <tr><th>Library</th><th>Used for</th><th>Example</th></tr>
+    <tr><td>Spark SQL</td><td>querying structured data</td><td>find average order value per region from a sales table</td></tr>
+    <tr><td>Streaming</td><td>live, continuous data</td><td>flag a bank transaction as suspicious the moment it happens</td></tr>
+    <tr><td>MLlib</td><td>machine learning at scale</td><td>train a churn-prediction model on 50M customer records</td></tr>
+    <tr><td>GraphX</td><td>graph/network data</td><td>find the shortest path between two people in a social network</td></tr>
+  </table>
+
+  <div class="page-num">page 5</div>
+</div>
+
+<!-- ============ PAGE 6: Spark Architecture ============ -->
+<div class="page">
+  <div class="spiral"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <span class="tag">Topic 6</span>
+  <h1 class="page-title">Spark Architecture</h1>
+  <div class="subtitle">Driver → SparkContext → Cluster Manager → Executors → Tasks 🏗️</div>
+
+  <div class="arrow-flow">
+    <div class="flow-box">Driver Program</div>
+    <div class="flow-arrow">➜</div>
+    <div class="flow-box">SparkContext</div>
+    <div class="flow-arrow">➜</div>
+    <div class="flow-box">Cluster Manager</div>
+    <div class="flow-arrow">➜</div>
+    <div class="flow-box">Executors</div>
+    <div class="flow-arrow">➜</div>
+    <div class="flow-box">Tasks</div>
+  </div>
+
+  <div class="diagram-wrap">
+    <svg width="560" height="230" viewBox="0 0 560 230">
+      <rect x="230" y="15" width="120" height="55" rx="10" fill="#fff3a3" stroke="#c9622a" stroke-width="2.5"/>
+      <text x="290" y="47" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="18" fill="#1f3a5f">Driver</text>
+
+      <line x1="290" y1="70" x2="290" y2="100" stroke="#7a7a7a" stroke-width="2"/>
+      <rect x="230" y="100" width="120" height="45" rx="10" fill="#d6e8f5" stroke="#1f3a5f" stroke-width="2.5"/>
+      <text x="290" y="127" text-anchor="middle" font-family="Patrick Hand" font-size="14" fill="#1f3a5f">Cluster Manager</text>
+
+      <line x1="250" y1="145" x2="110" y2="185" stroke="#7a7a7a" stroke-width="2"/>
+      <line x1="290" y1="145" x2="290" y2="185" stroke="#7a7a7a" stroke-width="2"/>
+      <line x1="330" y1="145" x2="470" y2="185" stroke="#7a7a7a" stroke-width="2"/>
+
+      <rect x="50" y="185" width="120" height="40" rx="8" fill="#d6f5d6" stroke="#0d7d6f" stroke-width="2"/>
+      <text x="110" y="210" text-anchor="middle" font-family="Patrick Hand" font-size="13" fill="#1f3a5f">Executor 1</text>
+
+      <rect x="230" y="185" width="120" height="40" rx="8" fill="#d6f5d6" stroke="#0d7d6f" stroke-width="2"/>
+      <text x="290" y="210" text-anchor="middle" font-family="Patrick Hand" font-size="13" fill="#1f3a5f">Executor 2</text>
+
+      <rect x="410" y="185" width="120" height="40" rx="8" fill="#d6f5d6" stroke="#0d7d6f" stroke-width="2"/>
+      <text x="470" y="210" text-anchor="middle" font-family="Patrick Hand" font-size="13" fill="#1f3a5f">Executor 3</text>
+    </svg>
+  </div>
+
+  <p style="font-family:'Shadows Into Light',cursive; text-align:center; color:var(--pencil-grey); margin-top:-8px;">each executor runs many small Tasks on its slice of the data</p>
+
+  <ul>
+    <li><b>Driver Program</b> — the "project manager." Your actual code runs here; it plans the whole job.</li>
+    <li><b>SparkContext</b> — the driver's phone line to the outside world; connects it to the cluster.</li>
+    <li><b>Cluster Manager</b> — the "HR department"; decides which machines are free and assigns them (options: standalone, YARN, Kubernetes...).</li>
+    <li><b>Executors</b> — the actual workers on each machine; they run tasks and hold data in memory.</li>
+    <li><b>Tasks</b> — the smallest to-do items, handed out to executors to work on in parallel.</li>
+  </ul>
+
+  <h2 class="section">Walking through a real run</h2>
+  <div class="example">
+    <b>You write:</b> <code>df.filter(...).groupBy("city").sum("revenue")</code><br>
+    1. The <b>Driver</b> breaks this into a <b>Job</b>, then splits the job into <b>Stages</b> (groups of steps that can run without needing to reshuffle data).<br>
+    2. Each Stage is split into many small <b>Tasks</b> — one Task per data partition.<br>
+    3. The <b>Cluster Manager</b> hands Tasks to available <b>Executors</b>, which run them in parallel and hold intermediate results in memory.<br>
+    4. The Driver collects and combines the final results back for you.
+  </div>
+
+  <div class="box">
+    <div class="box-title">Analogy recap 🏗️</div>
+    <p style="margin:0;">Driver = project manager writing the plan · Cluster Manager = HR assigning available workers · Executors = the workers on-site · Tasks = individual bricks each worker lays. Nobody touches the whole wall alone — everyone builds their section in parallel.</p>
+  </div>
+
+  <div class="page-num">page 6</div>
+</div>
+
+<!-- ============ PAGE 7: Where PySpark fits ============ -->
+<div class="page">
+  <div class="spiral"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <span class="tag">Topic 7</span>
+  <h1 class="page-title">Where does PySpark fit?</h1>
+  <div class="subtitle">Python's doorway into Spark 🐍⚡</div>
+
+  <p>Spark itself is written in <b>Scala</b> and runs on the <b>JVM</b> (Java Virtual Machine). <span class="highlight">PySpark</span> is simply the <b>Python API</b> for it.</p>
+
+  <div class="diagram-wrap">
+    <svg width="560" height="180" viewBox="0 0 560 180">
+      <rect x="20" y="55" width="120" height="55" rx="10" fill="#d6e8f5" stroke="#1f3a5f" stroke-width="2.5"/>
+      <text x="80" y="88" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="19" fill="#1f3a5f">Your Python code</text>
+
+      <text x="185" y="90" font-family="Caveat" font-weight="700" font-size="20" fill="#c9622a">➜ Py4J ➜</text>
+
+      <rect x="260" y="55" width="120" height="55" rx="10" fill="#fff3a3" stroke="#c9622a" stroke-width="2.5"/>
+      <text x="320" y="88" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="19" fill="#1f3a5f">JVM Spark engine</text>
+
+      <text x="395" y="90" font-family="Caveat" font-weight="700" font-size="20" fill="#0d7d6f">➜</text>
+
+      <rect x="420" y="55" width="120" height="55" rx="10" fill="#d6f5d6" stroke="#0d7d6f" stroke-width="2.5"/>
+      <text x="480" y="80" text-anchor="middle" font-family="Patrick Hand" font-size="14" fill="#1f3a5f">Cluster of</text>
+      <text x="480" y="98" text-anchor="middle" font-family="Patrick Hand" font-size="14" fill="#1f3a5f">machines</text>
+    </svg>
+  </div>
+
+  <ul>
+    <li>You write familiar <b>Python</b> code (DataFrames, functions, etc.)</li>
+    <li>A bridge called <b>Py4J</b> translates your calls into instructions for the JVM-based Spark engine.</li>
+    <li>Spark then distributes the actual heavy-lifting across the cluster — the computation still runs at full JVM speed.</li>
+  </ul>
+
+  <div class="box">
+    <div class="box-title">Why PySpark specifically?</div>
+    <p style="margin:0;">Python is beginner-friendly and has a massive data-science ecosystem (pandas, numpy, scikit-learn). PySpark lets you keep that comfort while getting Spark's distributed power underneath — best of both worlds.</p>
+  </div>
+
+  <div class="example">
+    <b>Mental model:</b> pandas = doing your homework alone at your desk. PySpark = you write the same homework instructions, but a whole classroom of students (executors) does the work in parallel, and you just collect the combined answer.
+  </div>
+
+  <h2 class="section">Your very first PySpark line (preview)</h2>
+  <div class="box">
+    <div class="box-title">SparkSession — your entry point</div>
+    <p style="margin:0 0 8px 0;">Every PySpark program starts by creating a <b>SparkSession</b> — this is what sets up the Driver, talks to SparkContext, and connects to the cluster behind the scenes:</p>
+    <p style="font-family:'Patrick Hand',cursive; background:#eaf3fb; padding:8px 12px; border-radius:6px; margin:0;">
+      spark = SparkSession.builder.appName("MyFirstApp").getOrCreate()
+    </p>
+    <p style="margin:8px 0 0 0;">Everything you do after this — reading files, running SQL, building DataFrames — flows through <code>spark</code>. We'll actually run this on Day 2!</p>
+  </div>
+
+  <div class="page-num">page 7</div>
+</div>
+
+<!-- ============ PAGE 8: Real-world case studies ============ -->
+<div class="page">
+  <div class="spiral"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <span class="tag">Bonus</span>
+  <h1 class="page-title">Real-World Case Studies</h1>
+  <div class="subtitle">why companies actually reach for Spark 🏢</div>
+
+  <div class="example">
+    <b>🚗 Uber</b> — processes trillions of GPS/trip events to power real-time pricing (surge pricing), ETA predictions, and fraud detection. Data arrives continuously from millions of devices — a single machine could never keep up with that velocity.
+  </div>
+
+  <div class="example">
+    <b>🛒 Amazon</b> — analyses huge volumes of clickstream and purchase data to power "customers who bought this also bought…" recommendations, refreshed constantly as new orders come in across the globe.
+  </div>
+
+  <div class="example">
+    <b>🎬 Netflix</b> — runs Spark jobs across petabytes of viewing data to personalise recommendations and decide what content to produce next, blending structured ratings with unstructured viewing behaviour.
+  </div>
+
+  <div class="example">
+    <b>🏦 Banks / Fintech (e.g. fraud teams)</b> — score transactions for fraud risk within milliseconds using streaming pipelines, while also running huge nightly batch jobs to retrain fraud-detection models on historical data.
+  </div>
+
+  <div class="box">
+    <div class="box-title">The common thread 🧵</div>
+    <p style="margin:0;">In every case, the data is too big for one machine (Volume), arrives too fast to batch up and wait (Velocity), or needs the same heavy computation repeated constantly (retraining models, recomputing recommendations). That combination is exactly what distributed, in-memory processing like Spark was built for.</p>
+  </div>
+
+  <div class="page-num">page 8</div>
+</div>
+
+<!-- ============ PAGE 9: Glossary / Cheat Sheet ============ -->
+<div class="page">
+  <div class="spiral"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <span class="tag">Bonus</span>
+  <h1 class="page-title">Quick Glossary</h1>
+  <div class="subtitle">key terms, all in one place 📖</div>
+
+  <table class="notebook-table">
+    <tr><th>Term</th><th>Plain-English meaning</th></tr>
+    <tr><td>Cluster</td><td>a group of machines working together as one system</td></tr>
+    <tr><td>Node</td><td>a single machine within the cluster</td></tr>
+    <tr><td>Partition</td><td>a chunk of the dataset stored/processed on one node</td></tr>
+    <tr><td>RDD</td><td>Spark's original in-memory, fault-tolerant distributed collection</td></tr>
+    <tr><td>DataFrame</td><td>a table-like structure built on top of RDDs, with named columns (like a pandas DataFrame, but distributed)</td></tr>
+    <tr><td>Driver</td><td>the process running your main code, plans the whole job</td></tr>
+    <tr><td>Executor</td><td>a worker process that runs tasks and holds data in memory</td></tr>
+    <tr><td>Job</td><td>the full unit of work triggered by an action (like <code>.count()</code>)</td></tr>
+    <tr><td>Stage</td><td>a group of tasks that can run without reshuffling data</td></tr>
+    <tr><td>Task</td><td>the smallest unit of work, run on one partition by one executor</td></tr>
+    <tr><td>Fault tolerance</td><td>the system's ability to recover automatically if a machine fails</td></tr>
+  </table>
+
+  <div class="box">
+    <div class="box-title">Keep this page bookmarked 🔖</div>
+    <p style="margin:0;">These terms will come up constantly from Day 2 onward once we start writing real PySpark code — refer back here whenever a word feels unfamiliar.</p>
+  </div>
+
+  <div class="page-num">page 9</div>
+</div>
+
+<!-- ============ PAGE 10: Recap + Practice ============ -->
+<div class="page">
+  <div class="spiral"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <span class="tag">Wrap-up</span>
+  <h1 class="page-title">Day 1 Recap + Practice</h1>
+  <div class="subtitle">quick mind-map + your to-dos ✅</div>
+
+  <div class="diagram-wrap">
+    <svg width="560" height="260" viewBox="0 0 560 260">
+      <circle cx="280" cy="130" r="55" fill="#fff3a3" stroke="#c9622a" stroke-width="3"/>
+      <text x="280" y="125" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="20" fill="#1f3a5f">Day 1</text>
+      <text x="280" y="145" text-anchor="middle" font-family="Caveat" font-weight="700" font-size="16" fill="#1f3a5f">Big Data + Spark</text>
+
+      <g font-family="Patrick Hand" font-size="13" fill="#1f3a5f">
+        <line x1="280" y1="75" x2="280" y2="30" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="4 3"/>
+        <text x="280" y="20" text-anchor="middle">4 Vs of Big Data</text>
+
+        <line x1="225" y1="100" x2="90" y2="55" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="4 3"/>
+        <text x="90" y="45" text-anchor="middle">pandas limits</text>
+
+        <line x1="225" y1="160" x2="90" y2="205" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="4 3"/>
+        <text x="90" y="220" text-anchor="middle">Hadoop: HDFS/MR/YARN</text>
+
+        <line x1="335" y1="100" x2="470" y2="55" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="4 3"/>
+        <text x="470" y="45" text-anchor="middle">Why Spark: in-memory</text>
+
+        <line x1="335" y1="160" x2="470" y2="205" stroke="#7a7a7a" stroke-width="2" stroke-dasharray="4 3"/>
+        <text x="470" y="220" text-anchor="middle">Driver &amp; Executors</text>
+      </g>
+    </svg>
+  </div>
+
+  <h2 class="section">📝 Practice Exercises</h2>
+  <ul class="checklist">
+    <li>Write a short paragraph comparing pandas vs Spark — when would you reach for each?</li>
+    <li>List 3 real-world companies/use-cases where distributed processing is necessary.</li>
+    <li>Draw the Spark cluster architecture diagram from memory (Driver → SparkContext → Cluster Manager → Executors → Tasks).</li>
+    <li>Bonus: pick one company from the case-studies page and identify which of the 4 V's applies most to their problem, and why.</li>
+  </ul>
+
+  <div class="box">
+    <div class="box-title">Say it out loud (hands-on exercise)</div>
+    <p style="margin:0;">In one sentence each, explain: What does the Driver do? What does SparkContext do? What does the Cluster Manager do? What do Executors do? What is a Task?</p>
+  </div>
+
+  <h2 class="section">❓ Common beginner questions</h2>
+  <div class="example">
+    <b>"Do I need a real cluster to learn PySpark?"</b> No — PySpark can run in "local mode" on a single laptop, simulating multiple executors as threads. Perfect for learning before touching a real cluster.
+  </div>
+  <div class="example">
+    <b>"Is Spark replacing pandas entirely?"</b> Not really — they solve different problems. Many teams use pandas for small/medium analysis and switch to PySpark only once data outgrows one machine.
+  </div>
+
+  <div class="sticky" style="position:relative; margin-top:20px; display:inline-block; transform: rotate(-2deg);">
+    Tomorrow (Day 2): RDDs &amp; DataFrames — actually writing PySpark code! 🎉
+  </div>
+
+  <div class="page-num">page 10</div>
+</div>
+
+</body>
+</html>
